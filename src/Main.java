@@ -361,7 +361,7 @@ public class Main {
 
 
 
-        CargoTrain cargoTrain = new CargoTrain("C789", "Cargo", "14:00", "20:00" , "On time" , 50);
+        CargoTrain cargoTrain = new CargoTrain("C789", "Cargo", "14:00", "21:00" , "On time" , 50);
         cargoTrain.startEngine();
         cargoTrain.displayCargoInfo();
         cargoTrain.stopEngine();
