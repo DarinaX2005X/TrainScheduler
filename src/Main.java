@@ -10,61 +10,88 @@ class Train implements ClonableTrain {
     private String arrivalTime;
     private String status;
 
-    public Train(String trainId, String trainType, String departureTime, String arrivalTime, String status) {
-        this.trainId = trainId;
-        this.trainType = trainType;
-        this.departureTime = departureTime;
-        this.arrivalTime = arrivalTime;
-        this.status = status;
+    public Train(TrainBuilder builder) {
+        this.trainId = builder.trainId;
+        this.trainType = builder.trainType;
+        this.departureTime = builder.departureTime;
+        this.arrivalTime = builder.arrivalTime;
+        this.status = builder.status;
     }
 
     public String getTrainId() {
         return trainId;
     }
 
-    public void setTrainId(String trainId) {
-        this.trainId = trainId;
-    }
-
     public String getTrainType() {
         return trainType;
     }
-
-    public void setTrainType(String trainType) {
-        this.trainType = trainType;
-    }
-
     public String getDepartureTime() {
         return departureTime;
-    }
-
-    public void setDepartureTime(String departureTime) {
-        this.departureTime = departureTime;
     }
     public String getArrivalTime() {
         return arrivalTime;
     }
-
-    public void setArrivalTime(String arrivalTime) {
-        this.arrivalTime = arrivalTime;
-    }
-
     public String getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
     @Override
     public Train clone() {
-        return new Train(trainId,trainType,departureTime,arrivalTime,status);
+        return new Train.TrainBuilder()
+                .withTrainId(trainId)
+                .withTrainType(trainType)
+                .withDepartureTime(departureTime)
+                .withArrivalTime(arrivalTime)
+                .withStatus(status)
+                .build();
     }
 
     public void displayTrainInfo() {
         System.out.println("Train ID: " + trainId + ", Type: " + trainType +
                 ", Departure: " + departureTime + ", Arrival: " + arrivalTime + ", Status: " + status);
+    }
+
+    public static class TrainBuilder {
+        private String trainId;
+        private String trainType;
+        private String departureTime;
+        private String arrivalTime;
+        private String status;
+        protected double cargoWeight;
+
+        public TrainBuilder withTrainId(String trainId) {
+            this.trainId = trainId;
+            return this;
+        }
+
+        public TrainBuilder withTrainType(String trainType) {
+            this.trainType = trainType;
+            return this;
+        }
+
+        public TrainBuilder withDepartureTime(String departureTime) {
+            this.departureTime = departureTime;
+            return this;
+        }
+
+        public TrainBuilder withArrivalTime(String arrivalTime) {
+            this.arrivalTime = arrivalTime;
+            return this;
+        }
+
+        public TrainBuilder withStatus(String status) {
+            this.status = status;
+            return this;
+        }
+
+        public TrainBuilder withCargoWeight(double cargoWeight) {
+            this.cargoWeight = cargoWeight;
+            return this;
+        }
+
+        public Train build() {
+            return new Train(this);
+        }
     }
 }
 
@@ -82,13 +109,18 @@ interface MaintenanceOperations {
 
 class ElectricTrain extends Train implements TrainOperations, MaintenanceOperations {
 
-    public ElectricTrain(String trainId, String trainType, String departureTime, String arrivalTime, String status) {
-        super(trainId, trainType, departureTime, arrivalTime, status);
+    private ElectricTrain(ElectricTrainBuilder builder) {
+        super(builder);
     }
-    public ElectricTrain clone(){
-        return new ElectricTrain(getTrainId(),getTrainType(),getDepartureTime(),getArrivalTime(),getStatus());
+    public ElectricTrain clone() {
+        return (ElectricTrain) new ElectricTrainBuilder()
+                .withTrainId(getTrainId())
+                .withTrainType(getTrainType())
+                .withDepartureTime(getDepartureTime())
+                .withArrivalTime(getArrivalTime())
+                .withStatus(getStatus())
+                .build();
     }
-
     @Override
     public void startEngine() {
         System.out.println("Electric engine started.");
@@ -103,18 +135,31 @@ class ElectricTrain extends Train implements TrainOperations, MaintenanceOperati
     public void performMaintenance() {
         System.out.println("Performing maintenance on electric train.");
     }
+
+    public static class ElectricTrainBuilder extends TrainBuilder {
+        @Override
+        public ElectricTrain build() {
+            return new ElectricTrain(this);
+        }
+    }
 }
 
 
 class DieselTrain extends Train implements TrainOperations, MaintenanceOperations {
 
-    public DieselTrain(String trainId, String trainType, String departureTime, String arrivalTime, String status) {
-        super(trainId, trainType, departureTime, arrivalTime, status);
+    private DieselTrain(DieselTrainBuilder builder) {
+        super(builder);
     }
 
     @Override
     public DieselTrain clone() {
-        return new DieselTrain(getTrainId(),getTrainType(),getDepartureTime(),getArrivalTime(),getStatus());
+        return (DieselTrain) new DieselTrainBuilder()
+                .withTrainId(getTrainId())
+                .withTrainType(getTrainType())
+                .withDepartureTime(getDepartureTime())
+                .withArrivalTime(getArrivalTime())
+                .withStatus(getStatus())
+                .build();
     }
 
     @Override
@@ -130,6 +175,13 @@ class DieselTrain extends Train implements TrainOperations, MaintenanceOperation
     @Override
     public void performMaintenance() {
         System.out.println("Performing maintenance on diesel train.");
+    }
+
+    public static class DieselTrainBuilder extends TrainBuilder {
+        @Override
+        public DieselTrain build() {
+            return new DieselTrain(this);
+        }
     }
 }
 
@@ -202,7 +254,14 @@ class TrainStatusUpdater implements TrainUpdaterStrategy {
         Train train = schedule.getTrainById(trainId);
         if (train != null) {
             String oldStatus = train.getStatus();
-            train.setStatus(newStatus);
+            Train updatedTrain = new Train.TrainBuilder()
+                    .withTrainId(train.getTrainId())
+                    .withTrainType(train.getTrainType())
+                    .withDepartureTime(train.getDepartureTime())
+                    .withArrivalTime(train.getArrivalTime())
+                    .withStatus(newStatus)
+                    .build();
+            schedule.addTrain(updatedTrain);
             logger.logStatusChange(trainId, oldStatus, newStatus);
         } else {
             System.out.println("Train not found.");
@@ -224,8 +283,14 @@ class TrainTimeUpdater implements TrainUpdaterStrategy {
     public void update(TrainSchedule schedule, String trainId) {
         Train train = schedule.getTrainById(trainId);
         if (train != null) {
-            train.setDepartureTime(departureTime);
-            train.setArrivalTime(arrivalTime);
+            Train updatedTrain = new Train.TrainBuilder()
+                    .withTrainId(train.getTrainId())
+                    .withTrainType(train.getTrainType())
+                    .withDepartureTime(departureTime)
+                    .withArrivalTime(arrivalTime)
+                    .withStatus(train.getStatus())
+                    .build();
+            schedule.addTrain(updatedTrain);
             System.out.println("Train " + trainId + " times updated.");
         } else {
             System.out.println("Train not found.");
@@ -268,12 +333,19 @@ class Station {
 class CargoTrain extends Train implements TrainOperations {
     private double cargoWeight;
 
-    public CargoTrain(String trainId, String trainType, String departureTime, String arrivalTime, String status, double cargoWeight) {
-        super(trainId, trainType, departureTime,arrivalTime,status);
-        this.cargoWeight = cargoWeight;
+    private CargoTrain(CargoTrainBuilder builder) {
+        super(builder);
+        this.cargoWeight = builder.cargoWeight;
     }
     public CargoTrain clone() {
-        return new CargoTrain(getTrainId(), getTrainType(), getDepartureTime(), getArrivalTime(), getStatus(), cargoWeight);
+        return (CargoTrain) new CargoTrainBuilder()
+                .withTrainId(getTrainId())
+                .withTrainType(getTrainType())
+                .withDepartureTime(getDepartureTime())
+                .withArrivalTime(getArrivalTime())
+                .withStatus(getStatus())
+                .withCargoWeight(cargoWeight)
+                .build();
     }
 
     @Override
@@ -288,6 +360,20 @@ class CargoTrain extends Train implements TrainOperations {
 
     public void displayCargoInfo() {
         System.out.println("Cargo weight: " + cargoWeight + " tons");
+    }
+
+    public static class CargoTrainBuilder extends TrainBuilder {
+
+        private double cargoWeight;
+
+        public CargoTrainBuilder withCargoWeight(double cargoWeight) {
+            this.cargoWeight = cargoWeight;
+            return this;
+        }
+
+        public CargoTrain build() {
+            return new CargoTrain(this);
+        }
     }
 }
 
@@ -329,8 +415,21 @@ class TrainManager {
 }
 public class Main {
     public static void main(String[] args) {
-        Train electricTrain = new ElectricTrain("E123", "Electric", "10:00", "12:00", "On Time");
-        Train dieselTrain = new DieselTrain("D456", "Diesel", "12:00", "14:00", "Delayed");
+        Train electricTrain = new ElectricTrain.ElectricTrainBuilder()
+                .withTrainId("E123")
+                .withTrainType("Electric")
+                .withDepartureTime("10:00")
+                .withArrivalTime("12:00")
+                .withStatus("On Time")
+                .build();
+
+        Train dieselTrain = new DieselTrain.DieselTrainBuilder()
+                .withTrainId("D456")
+                .withTrainType("Diesel")
+                .withDepartureTime("12:00")
+                .withArrivalTime("14:00")
+                .withStatus("Delayed")
+                .build();
 
         // Create controllers for trains
         TrainController electricController = new TrainController((TrainOperations) electricTrain);
@@ -361,7 +460,14 @@ public class Main {
 
 
 
-        CargoTrain cargoTrain = new CargoTrain("C789", "Cargo", "14:00", "20:00" , "On time" , 50);
+        CargoTrain cargoTrain = (CargoTrain) new CargoTrain.CargoTrainBuilder()
+                .withTrainId("C789")
+                .withTrainType("Cargo")
+                .withDepartureTime("14:00")
+                .withArrivalTime("20:00")
+                .withStatus("On time")
+                .withCargoWeight(50.0)
+                .build();
         cargoTrain.startEngine();
         cargoTrain.displayCargoInfo();
         cargoTrain.stopEngine();
