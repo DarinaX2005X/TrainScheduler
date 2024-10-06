@@ -1,6 +1,9 @@
 import java.util.ArrayList;
 import java.util.List;
-class Train {
+interface ClonableTrain {
+    Train clone();
+}
+class Train implements ClonableTrain {
     private String trainId;
     private String trainType;
     private String departureTime;
@@ -54,6 +57,11 @@ class Train {
         this.status = status;
     }
 
+    @Override
+    public Train clone() {
+        return new Train(trainId,trainType,departureTime,arrivalTime,status);
+    }
+
     public void displayTrainInfo() {
         System.out.println("Train ID: " + trainId + ", Type: " + trainType +
                 ", Departure: " + departureTime + ", Arrival: " + arrivalTime + ", Status: " + status);
@@ -77,6 +85,9 @@ class ElectricTrain extends Train implements TrainOperations, MaintenanceOperati
     public ElectricTrain(String trainId, String trainType, String departureTime, String arrivalTime, String status) {
         super(trainId, trainType, departureTime, arrivalTime, status);
     }
+    public ElectricTrain clone(){
+        return new ElectricTrain(getTrainId(),getTrainType(),getDepartureTime(),getArrivalTime(),getStatus());
+    }
 
     @Override
     public void startEngine() {
@@ -99,6 +110,11 @@ class DieselTrain extends Train implements TrainOperations, MaintenanceOperation
 
     public DieselTrain(String trainId, String trainType, String departureTime, String arrivalTime, String status) {
         super(trainId, trainType, departureTime, arrivalTime, status);
+    }
+
+    @Override
+    public DieselTrain clone() {
+        return new DieselTrain(getTrainId(),getTrainType(),getDepartureTime(),getArrivalTime(),getStatus());
     }
 
     @Override
@@ -256,6 +272,9 @@ class CargoTrain extends Train implements TrainOperations {
         super(trainId, trainType, departureTime,arrivalTime,status);
         this.cargoWeight = cargoWeight;
     }
+    public CargoTrain clone() {
+        return new CargoTrain(getTrainId(), getTrainType(), getDepartureTime(), getArrivalTime(), getStatus(), cargoWeight);
+    }
 
     @Override
     public void startEngine() {
@@ -291,7 +310,23 @@ class Maintenance {
         return true;
     }
 }
+class TrainManager {
+    private static TrainManager instance;
+    private TrainManager(){
+        System.out.println("TrainManager initialized");
+    }
+    public static TrainManager getInstance(){
+        if(instance == null){
+            instance = new TrainManager();
+        }
+        return instance;
+    }
+    public void manageTrain(Train train) {
+        System.out.println("Managing train: " + train.getTrainId());
+        train.displayTrainInfo();
+    }
 
+}
 public class Main {
     public static void main(String[] args) {
         Train electricTrain = new ElectricTrain("E123", "Electric", "10:00", "12:00", "On Time");
@@ -342,5 +377,24 @@ public class Main {
         Maintenance maintenance = new Maintenance("2024-01-01", 180);
         maintenance.displayMaintenanceInfo();
         maintenance.isServiceDue("2024-06-01");
+
+
+        Train electricTrainClone = electricTrain.clone();
+        Train dieselTrainClone = dieselTrain.clone();
+
+
+        electricTrainClone.displayTrainInfo();
+        dieselTrainClone.displayTrainInfo();
+
+        TrainManager manager1 = TrainManager.getInstance();
+        TrainManager manager2 = TrainManager.getInstance();
+
+
+        System.out.println(manager1 == manager2);
+
+
+        manager1.manageTrain(electricTrain);
+        manager2.manageTrain(dieselTrain);
+
     }
 }
