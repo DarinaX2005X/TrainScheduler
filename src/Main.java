@@ -3,6 +3,38 @@ import java.util.List;
 interface ClonableTrain {
     Train clone();
 }
+interface MaintenanceFactory {
+    Maintenance createMaintenance(String lastServiceDate, int serviceIntervalDays);
+}
+interface PassengerFactory {
+    Passenger createPassenger(String name, String ticketNumber, String seatNumber);
+}
+
+interface StationFactory {
+    Station createStation(String stationName, String location);
+}
+interface TransportFactory {
+    Maintenance createMaintenance(String lastServiceDate, int serviceIntervalDays);
+    Passenger createPassenger(String name, String ticketNumber, String seatNumber);
+    Station createStation(String stationName, String location);
+}
+class DefaultTransportFactory implements TransportFactory {
+    @Override
+    public Maintenance createMaintenance(String lastServiceDate, int serviceIntervalDays) {
+        return new DefaultMaintenanceFactory().createMaintenance(lastServiceDate, serviceIntervalDays);
+    }
+
+    @Override
+    public Passenger createPassenger(String name, String ticketNumber, String seatNumber) {
+        return new DefaultPassengerFactory().createPassenger(name, ticketNumber, seatNumber);
+    }
+
+    @Override
+    public Station createStation(String stationName, String location) {
+        return new DefaultStationFactory().createStation(stationName, location);
+    }
+}
+
 class Train implements ClonableTrain {
     private String trainId;
     private String trainType;
@@ -297,6 +329,12 @@ class TrainTimeUpdater implements TrainUpdaterStrategy {
         }
     }
 }
+class DefaultPassengerFactory implements PassengerFactory {
+    @Override
+    public Passenger createPassenger(String name, String ticketNumber, String seatNumber) {
+        return new Passenger(name, ticketNumber, seatNumber);
+    }
+}
 
 class Passenger {
     private String name;
@@ -314,6 +352,12 @@ class Passenger {
     }
 }
 
+class DefaultStationFactory implements StationFactory {
+    @Override
+    public Station createStation(String stationName, String location) {
+        return new Station(stationName, location);
+    }
+}
 
 class Station {
     private String stationName;
@@ -377,6 +421,12 @@ class CargoTrain extends Train implements TrainOperations {
     }
 }
 
+class DefaultMaintenanceFactory implements MaintenanceFactory {
+    @Override
+    public Maintenance createMaintenance(String lastServiceDate, int serviceIntervalDays) {
+        return new Maintenance(lastServiceDate, serviceIntervalDays);
+    }
+}
 
 class Maintenance {
     private String lastServiceDate;
@@ -415,6 +465,11 @@ class TrainManager {
 }
 public class Main {
     public static void main(String[] args) {
+        TransportFactory factory = new DefaultTransportFactory();
+
+        Station station = factory.createStation("Central", "Astana");
+        station.displayStationInfo();
+
         Train electricTrain = new ElectricTrain.ElectricTrainBuilder()
                 .withTrainId("E123")
                 .withTrainType("Electric")
@@ -440,6 +495,9 @@ public class Main {
         schedule.addTrain(electricTrain);
         schedule.addTrain(dieselTrain);
         schedule.displayAllTrains();
+
+        Passenger passenger = factory.createPassenger("John Doe", "T123", "12A");
+        passenger.displayPassengerInfo();
 
         // Start and end journeys
         electricController.startJourney();
@@ -473,16 +531,8 @@ public class Main {
         cargoTrain.stopEngine();
 
 
-        Passenger passenger = new Passenger("John Doe", "T123", "12A");
-        passenger.displayPassengerInfo();
-
-        Station station = new Station("Central", "Astana");
-        station.displayStationInfo();
 
 
-        Maintenance maintenance = new Maintenance("2024-01-01", 180);
-        maintenance.displayMaintenanceInfo();
-        maintenance.isServiceDue("2024-06-01");
 
 
         Train electricTrainClone = electricTrain.clone();
@@ -501,6 +551,9 @@ public class Main {
 
         manager1.manageTrain(electricTrain);
         manager2.manageTrain(dieselTrain);
+        Maintenance maintenance = factory.createMaintenance("2024-01-01", 180);
+        maintenance.displayMaintenanceInfo();
+        maintenance.isServiceDue("2024-06-01");
 
     }
 }
