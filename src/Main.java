@@ -36,7 +36,7 @@ class DefaultTransportFactory implements TransportFactory {
     }
 }
 
-class Train implements ClonableTrain {
+class Train implements ClonableTrain, Visitable {
     private String trainId;
     private String trainType;
     private String departureTime;
@@ -77,6 +77,11 @@ class Train implements ClonableTrain {
                 .withArrivalTime(arrivalTime)
                 .withStatus(status)
                 .build();
+    }
+
+    @Override
+    public void accept(TrainVisitor visitor) {
+        visitor.visitTrain(this);
     }
 
     public void displayTrainInfo() {
@@ -337,7 +342,7 @@ class DefaultPassengerFactory implements PassengerFactory {
     }
 }
 
-class Passenger {
+class Passenger implements Visitable {
     private String name;
     private String ticketNumber;
     private String seatNumber;
@@ -348,8 +353,17 @@ class Passenger {
         this.seatNumber = seatNumber;
     }
 
+    @Override
+    public void accept(TrainVisitor visitor) {
+        visitor.visitPassenger(this);
+    }
+
     public void displayPassengerInfo() {
         System.out.println("Passenger: " + name + ", Ticket: " + ticketNumber + ", Seat: " + seatNumber);
+    }
+
+    public String getName() {
+        return name;
     }
 }
 
@@ -360,7 +374,7 @@ class DefaultStationFactory implements StationFactory {
     }
 }
 
-class Station {
+class Station implements Visitable {
     private String stationName;
     private String location;
 
@@ -369,8 +383,17 @@ class Station {
         this.location = location;
     }
 
+    @Override
+    public void accept(TrainVisitor visitor) {
+        visitor.visitStation(this);
+    }
+
     public void displayStationInfo() {
         System.out.println("Station: " + stationName + ", Location: " + location);
+    }
+
+    public String getStationName() {
+        return stationName;
     }
 }
 
@@ -528,6 +551,33 @@ class TrainContext {
     }
 }
 
+interface TrainVisitor {
+    void visitTrain(Train train);
+    void visitPassenger(Passenger passenger);
+    void visitStation(Station station);
+}
+
+class ConcreteTrainVisitor implements TrainVisitor {
+    @Override
+    public void visitTrain(Train train) {
+        System.out.println("Inspecting train: " + train.getTrainId());
+    }
+
+    @Override
+    public void visitPassenger(Passenger passenger) {
+        System.out.println("Inspecting passenger: " + passenger.getName());
+    }
+
+    @Override
+    public void visitStation(Station station) {
+        System.out.println("Inspecting station: " + station.getStationName());
+    }
+}
+
+interface Visitable {
+    void accept(TrainVisitor visitor);
+}
+
 public class Main {
     public static void main(String[] args) {
         TransportFactory factory = new DefaultTransportFactory();
@@ -550,6 +600,14 @@ public class Main {
                 .withArrivalTime("14:00")
                 .withStatus("Delayed")
                 .build();
+
+        Passenger passenger = factory.createPassenger("John Doe", "T123", "12A");
+
+        ConcreteTrainVisitor visitor = new ConcreteTrainVisitor();
+
+        electricTrain.accept(visitor);
+        passenger.accept(visitor);
+        station.accept(visitor);
 
         // Context for each train
         TrainContext electricTrainContext = new TrainContext();
@@ -590,7 +648,6 @@ public class Main {
         schedule.addTrain(dieselTrain);
         schedule.displayAllTrains();
 
-        Passenger passenger = factory.createPassenger("John Doe", "T123", "12A");
         passenger.displayPassengerInfo();
 
         // Start and end journeys
