@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.List;
+
 interface ClonableTrain {
     Train clone();
 }
@@ -463,6 +464,70 @@ class TrainManager {
     }
 
 }
+
+interface TrainState {
+    void handle(TrainContext context);
+}
+
+class RunningState implements TrainState {
+    @Override
+    public void handle(TrainContext context) {
+        System.out.println("The train is now running.");
+        context.setState(this);
+    }
+
+    @Override
+    public String toString() {
+        return "Running State";
+    }
+}
+
+class StoppedState implements TrainState {
+    @Override
+    public void handle(TrainContext context) {
+        System.out.println("The train is stopped.");
+        context.setState(this);
+    }
+
+    @Override
+    public String toString() {
+        return "Stopped State";
+    }
+}
+
+class MaintenanceState implements TrainState {
+    @Override
+    public void handle(TrainContext context) {
+        System.out.println("The train is under maintenance.");
+        context.setState(this);
+    }
+
+    @Override
+    public String toString() {
+        return "Maintenance State";
+    }
+}
+
+class TrainContext {
+    private TrainState currentState;
+
+    public TrainContext() {
+        this.currentState = new StoppedState();
+    }
+
+    public void setState(TrainState state) {
+        this.currentState = state;
+    }
+
+    public TrainState getState() {
+        return currentState;
+    }
+
+    public void applyState() {
+        this.currentState.handle(this);
+    }
+}
+
 public class Main {
     public static void main(String[] args) {
         TransportFactory factory = new DefaultTransportFactory();
@@ -485,6 +550,35 @@ public class Main {
                 .withArrivalTime("14:00")
                 .withStatus("Delayed")
                 .build();
+
+        // Context for each train
+        TrainContext electricTrainContext = new TrainContext();
+        TrainContext dieselTrainContext = new TrainContext();
+
+        // Applying initial state (Stopped by default)
+        electricTrainContext.applyState();
+        dieselTrainContext.applyState();
+
+        // Changing the state to “Running”
+        electricTrainContext.setState(new RunningState());
+        electricTrainContext.applyState();
+        electricTrain.displayTrainInfo();
+
+        dieselTrainContext.setState(new RunningState());
+        dieselTrainContext.applyState();
+        dieselTrain.displayTrainInfo();
+
+        // Switching back to stop state
+        electricTrainContext.setState(new StoppedState());
+        electricTrainContext.applyState();
+
+        dieselTrainContext.setState(new StoppedState());
+        dieselTrainContext.applyState();
+
+        // For example, a diesel train needs maintenance
+        dieselTrainContext.setState(new MaintenanceState());
+        dieselTrainContext.applyState();
+
 
         // Create controllers for trains
         TrainController electricController = new TrainController((TrainOperations) electricTrain);
@@ -529,10 +623,6 @@ public class Main {
         cargoTrain.startEngine();
         cargoTrain.displayCargoInfo();
         cargoTrain.stopEngine();
-
-
-
-
 
 
         Train electricTrainClone = electricTrain.clone();
