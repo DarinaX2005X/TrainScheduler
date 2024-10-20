@@ -1,8 +1,14 @@
 import java.util.ArrayList;
 import java.util.List;
+
 interface ClonableTrain {
     Train clone();
 }
+
+interface Command {
+    void execute();
+}
+
 interface MaintenanceFactory {
     Maintenance createMaintenance(String lastServiceDate, int serviceIntervalDays);
 }
@@ -18,6 +24,12 @@ interface TransportFactory {
     Passenger createPassenger(String name, String ticketNumber, String seatNumber);
     Station createStation(String stationName, String location);
 }
+interface TrainIterator {
+    boolean hasNext();
+    Train next();
+}
+
+
 class DefaultTransportFactory implements TransportFactory {
     @Override
     public Maintenance createMaintenance(String lastServiceDate, int serviceIntervalDays) {
@@ -127,6 +139,29 @@ class Train implements ClonableTrain {
     }
 }
 
+class TrainScheduleIterator implements TrainIterator {
+    private List<Train> trains;
+    private int position = 0;
+
+    public TrainScheduleIterator(List<Train> trains) {
+        this.trains = trains;
+    }
+
+    @Override
+    public boolean hasNext() {
+        return position < trains.size();
+    }
+
+    @Override
+    public Train next() {
+        if (hasNext()) {
+            return trains.get(position++);
+        }
+        return null;
+    }
+}
+
+
 
 interface TrainOperations {
     void startEngine();
@@ -138,6 +173,103 @@ interface MaintenanceOperations {
     void performMaintenance();
 }
 
+class Ticket {
+    private String ticketId;
+    private String passengerName;
+    private String seatNumber;
+    private boolean isBooked;
+
+    public Ticket(String ticketId, String passengerName, String seatNumber) {
+        this.ticketId = ticketId;
+        this.passengerName = passengerName;
+        this.seatNumber = seatNumber;
+        this.isBooked = false;
+    }
+
+    public void book() {
+        if (!isBooked) {
+            System.out.println("Booking ticket for " + passengerName + " on seat " + seatNumber);
+            isBooked = true;
+        } else {
+            System.out.println("Ticket is already booked.");
+        }
+    }
+
+    public void cancel() {
+        if (isBooked) {
+            System.out.println("Canceling ticket for " + passengerName);
+            isBooked = false;
+        } else {
+            System.out.println("Ticket is not booked yet.");
+        }
+    }
+
+    public void modify(String newSeat) {
+        if (isBooked) {
+            System.out.println("Modifying seat for " + passengerName + " from " + seatNumber + " to " + newSeat);
+            seatNumber = newSeat;
+        } else {
+            System.out.println("Cannot modify unbooked ticket.");
+        }
+    }
+
+    public void displayTicketInfo() {
+        System.out.println("Ticket ID: " + ticketId + ", Passenger: " + passengerName + ", Seat: " + seatNumber + ", Status: " + (isBooked ? "Booked" : "Not Booked"));
+    }
+}
+// Command to book a ticket
+class BookTicketCommand implements Command {
+    private Ticket ticket;
+
+    public BookTicketCommand(Ticket ticket) {
+        this.ticket = ticket;
+    }
+
+    @Override
+    public void execute() {
+        ticket.book();
+    }
+}
+
+// Command to cancel a ticket
+class CancelTicketCommand implements Command {
+    private Ticket ticket;
+
+    public CancelTicketCommand(Ticket ticket) {
+        this.ticket = ticket;
+    }
+
+    @Override
+    public void execute() {
+        ticket.cancel();
+    }
+}
+
+class ModifyTicketCommand implements Command {
+    private Ticket ticket;
+    private String newSeat;
+
+    public ModifyTicketCommand(Ticket ticket, String newSeat) {
+        this.ticket = ticket;
+        this.newSeat = newSeat;
+    }
+
+    @Override
+    public void execute() {
+        ticket.modify(newSeat);
+    }
+}
+class TicketManager {
+    private Command command;
+
+    public void setCommand(Command command) {
+        this.command = command;
+    }
+
+    public void executeCommand() {
+        command.execute();
+    }
+}
 
 class ElectricTrain extends Train implements TrainOperations, MaintenanceOperations {
 
@@ -250,12 +382,7 @@ class TrainSchedule {
         trainList.add(train);
     }
 
-    public void displayAllTrains() {
-        System.out.println("Train Schedule:");
-        for (Train train : trainList) {
-            train.displayTrainInfo();
-        }
-    }
+
 
     public Train getTrainById(String trainId) {
         for (Train train : trainList) {
@@ -265,7 +392,11 @@ class TrainSchedule {
         }
         return null;
     }
+    public TrainIterator iterator() {
+        return new TrainScheduleIterator(trainList);
+    }
 }
+
 
 
 interface TrainUpdaterStrategy {
@@ -486,18 +617,43 @@ public class Main {
                 .withStatus("Delayed")
                 .build();
 
-        // Create controllers for trains
         TrainController electricController = new TrainController((TrainOperations) electricTrain);
         TrainController dieselController = new TrainController((TrainOperations) dieselTrain);
 
-        // Manage train schedule
+
         TrainSchedule schedule = new TrainSchedule();
         schedule.addTrain(electricTrain);
         schedule.addTrain(dieselTrain);
-        schedule.displayAllTrains();
+        TrainIterator iterator = schedule.iterator();
+        System.out.println("Train Schedule (using Iterator):");
+        while (iterator.hasNext()) {
+            Train train = iterator.next();
+            train.displayTrainInfo();
+        }
 
-        Passenger passenger = factory.createPassenger("John Doe", "T123", "12A");
-        passenger.displayPassengerInfo();
+
+        Ticket ticket1 = new Ticket("T123", "John Doe", "12A");
+
+
+        TicketManager ticketManager = new TicketManager();
+
+
+        Command bookCommand = new BookTicketCommand(ticket1);
+        ticketManager.setCommand(bookCommand);
+        ticketManager.executeCommand();
+        ticket1.displayTicketInfo();
+
+
+        Command modifyCommand = new ModifyTicketCommand(ticket1, "14B");
+        ticketManager.setCommand(modifyCommand);
+        ticketManager.executeCommand();
+        ticket1.displayTicketInfo();
+
+
+        Command cancelCommand = new CancelTicketCommand(ticket1);
+        ticketManager.setCommand(cancelCommand);
+        ticketManager.executeCommand();
+        ticket1.displayTicketInfo();
 
         // Start and end journeys
         electricController.startJourney();
@@ -551,6 +707,7 @@ public class Main {
 
         manager1.manageTrain(electricTrain);
         manager2.manageTrain(dieselTrain);
+        
         Maintenance maintenance = factory.createMaintenance("2024-01-01", 180);
         maintenance.displayMaintenanceInfo();
         maintenance.isServiceDue("2024-06-01");
