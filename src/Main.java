@@ -327,6 +327,52 @@ class TrainManager {
     }
 
 }
+abstract class TrainWithTemplate {
+
+    public final void performService() {
+        checkSystems();
+        cleanTrain();
+        refuelOrRecharge();
+        testRun();
+    }
+    protected abstract void checkSystems();
+    protected abstract void refuelOrRecharge();
+
+    private void cleanTrain() {
+        System.out.println("Train is being cleaned...");
+    }
+
+    private void testRun() {
+        System.out.println("Performing test run...");
+    }
+}
+
+class ElectricTrainWithTemplate extends TrainWithTemplate {
+    @Override
+    protected void checkSystems() {
+        System.out.println("Checking electric systems...");
+    }
+
+    @Override
+    protected void refuelOrRecharge() {
+        System.out.println("Recharging batteries...");
+    }
+}
+
+class DieselTrainWithTemplate extends TrainWithTemplate {
+    @Override
+    protected void checkSystems() {
+        System.out.println("Checking diesel systems...");
+    }
+
+    @Override
+    protected void refuelOrRecharge() {
+        System.out.println("Refueling diesel tank...");
+    }
+}
+
+
+
 public class Main {
     public static void main(String[] args) {
         Train electricTrain = new ElectricTrain("E123", "Electric", "10:00", "12:00", "On Time");
@@ -395,6 +441,9 @@ public class Main {
 
         manager1.manageTrain(electricTrain);
         manager2.manageTrain(dieselTrain);
+
+        TrainWithTemplate electricService = new ElectricTrainWithTemplate();
+        electricService.performService();
 
     }
 }
