@@ -3,12 +3,16 @@ import java.util.List;
 interface ClonableTrain {
     Train clone();
 }
+interface TrainObserver {
+    void update(String trainId, String message);
+}
 class Train implements ClonableTrain {
     private String trainId;
     private String trainType;
     private String departureTime;
     private String arrivalTime;
     private String status;
+    private List<TrainObserver> observers = new ArrayList<>();
 
     public Train(String trainId, String trainType, String departureTime, String arrivalTime, String status) {
         this.trainId = trainId;
@@ -18,6 +22,24 @@ class Train implements ClonableTrain {
         this.status = status;
     }
 
+    // Add an observer
+    public void addObserver(TrainObserver observer) {
+        observers.add(observer);
+    }
+
+    // Remove an observer
+    public void removeObserver(TrainObserver observer) {
+        observers.remove(observer);
+    }
+
+    // Notify all observers of a change
+    private void notifyObservers(String message) {
+        for (TrainObserver observer : observers) {
+            observer.update(trainId, message);
+        }
+    }
+
+    // Getter and Setter methods with notifications to observers
     public String getTrainId() {
         return trainId;
     }
@@ -40,13 +62,16 @@ class Train implements ClonableTrain {
 
     public void setDepartureTime(String departureTime) {
         this.departureTime = departureTime;
+        notifyObservers("Departure time updated to " + departureTime);
     }
+
     public String getArrivalTime() {
         return arrivalTime;
     }
 
     public void setArrivalTime(String arrivalTime) {
         this.arrivalTime = arrivalTime;
+        notifyObservers("Arrival time updated to " + arrivalTime);
     }
 
     public String getStatus() {
@@ -55,11 +80,12 @@ class Train implements ClonableTrain {
 
     public void setStatus(String status) {
         this.status = status;
+        notifyObservers("Status updated to " + status);
     }
 
     @Override
     public Train clone() {
-        return new Train(trainId,trainType,departureTime,arrivalTime,status);
+        return new Train(trainId, trainType, departureTime, arrivalTime, status);
     }
 
     public void displayTrainInfo() {
@@ -152,9 +178,10 @@ class TrainController {
     }
 }
 
-class TrainStatusLogger {
-    public void logStatusChange(String trainId, String oldStatus, String newStatus) {
-        System.out.println("Train " + trainId + " status changed from " + oldStatus + " to " + newStatus);
+class TrainStatusLogger implements TrainObserver {
+    @Override
+    public void update(String trainId, String message) {
+        System.out.println("Train " + trainId + " notification: " + message);
     }
 }
 
@@ -191,7 +218,6 @@ interface TrainUpdaterStrategy {
 
 class TrainStatusUpdater implements TrainUpdaterStrategy {
     private String newStatus;
-    private TrainStatusLogger logger = new TrainStatusLogger();
 
     public TrainStatusUpdater(String newStatus) {
         this.newStatus = newStatus;
@@ -201,9 +227,7 @@ class TrainStatusUpdater implements TrainUpdaterStrategy {
     public void update(TrainSchedule schedule, String trainId) {
         Train train = schedule.getTrainById(trainId);
         if (train != null) {
-            String oldStatus = train.getStatus();
-            train.setStatus(newStatus);
-            logger.logStatusChange(trainId, oldStatus, newStatus);
+            train.setStatus(newStatus); // This will automatically notify observers
         } else {
             System.out.println("Train not found.");
         }
@@ -226,7 +250,6 @@ class TrainTimeUpdater implements TrainUpdaterStrategy {
         if (train != null) {
             train.setDepartureTime(departureTime);
             train.setArrivalTime(arrivalTime);
-            System.out.println("Train " + trainId + " times updated.");
         } else {
             System.out.println("Train not found.");
         }
@@ -382,6 +405,9 @@ public class Main {
         TrainController electricController = new TrainController((TrainOperations) electricTrain);
         TrainController dieselController = new TrainController((TrainOperations) dieselTrain);
 
+        TrainObserver logger = new TrainStatusLogger();
+        electricTrain.addObserver(logger);
+        dieselTrain.addObserver(logger);
         // Manage train schedule
         TrainSchedule schedule = new TrainSchedule();
         schedule.addTrain(electricTrain);
