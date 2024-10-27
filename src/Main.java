@@ -1,5 +1,7 @@
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 interface ClonableTrain {
     Train clone();
@@ -36,12 +38,54 @@ class DefaultTransportFactory implements TransportFactory {
     }
 }
 
+// Memento
+class TrainMemento {
+    private final String trainId;
+    private final String trainType;
+    private final String departureTime;
+    private final String arrivalTime;
+    private final String status;
+
+    public TrainMemento(String trainId, String trainType, String departureTime, String arrivalTime, String status) {
+        this.trainId = trainId;
+        this.trainType = trainType;
+        this.departureTime = departureTime;
+        this.arrivalTime = arrivalTime;
+        this.status = status;
+    }
+
+    public String getTrainId() { return trainId; }
+    public String getTrainType() { return trainType; }
+    public String getDepartureTime() { return departureTime; }
+    public String getArrivalTime() { return arrivalTime; }
+    public String getStatus() { return status; }
+}
+
+// Memento Manager
+class MementoManager {
+    private final Map<String, List<TrainMemento>> mementoMap = new HashMap<>();
+
+    public void saveMemento(String trainId, TrainMemento memento) {
+        mementoMap.putIfAbsent(trainId, new ArrayList<>());
+        mementoMap.get(trainId).add(memento);
+    }
+
+    public TrainMemento getMemento(String trainId, int index) {
+        List<TrainMemento> mementos = mementoMap.get(trainId);
+        if (mementos != null && index < mementos.size()) {
+            return mementos.get(index);
+        }
+        return null;
+    }
+}
+
 class Train implements ClonableTrain, Visitable {
     private String trainId;
     private String trainType;
     private String departureTime;
     private String arrivalTime;
     private String status;
+    private MementoManager mementoManager = new MementoManager();
 
     public Train(TrainBuilder builder) {
         this.trainId = builder.trainId;
@@ -66,6 +110,25 @@ class Train implements ClonableTrain, Visitable {
     }
     public String getStatus() {
         return status;
+    }
+
+    public TrainMemento saveState() {
+        TrainMemento memento = new TrainMemento(trainId, trainType, departureTime, arrivalTime, status);
+        mementoManager.saveMemento(trainId, memento);
+        return memento;
+    }
+
+    public void restoreState(int index) {
+        TrainMemento memento = mementoManager.getMemento(trainId, index);
+        if (memento != null) {
+            this.trainType = memento.getTrainType();
+            this.departureTime = memento.getDepartureTime();
+            this.arrivalTime = memento.getArrivalTime();
+            this.status = memento.getStatus();
+            System.out.println("State restored from memento");
+        } else {
+            System.out.println("No memento found at index: " + index);
+        }
     }
 
     @Override
@@ -132,7 +195,6 @@ class Train implements ClonableTrain, Visitable {
         }
     }
 }
-
 
 interface TrainOperations {
     void startEngine();
@@ -702,5 +764,45 @@ public class Main {
         maintenance.displayMaintenanceInfo();
         maintenance.isServiceDue("2024-06-01");
 
+        // Using Memento to save and restore the state of trains
+        MementoManager mementoManager = new MementoManager();
+
+        // Saving the state of the electric train
+        TrainMemento savedElectricTrainState = new TrainMemento(
+                electricTrain.getTrainId(),
+                electricTrain.getTrainType(),
+                electricTrain.getDepartureTime(),
+                electricTrain.getArrivalTime(),
+                electricTrain.getStatus()
+        );
+        mementoManager.saveMemento(electricTrain.getTrainId(), savedElectricTrainState);
+
+        // Changing the state of the electric train
+        electricTrain = new ElectricTrain.ElectricTrainBuilder()
+                .withTrainId("E123")
+                .withTrainType("Electric")
+                .withDepartureTime("10:00")
+                .withArrivalTime("12:00")
+                .withStatus("Delayed")
+                .build();
+
+        System.out.println("Electric train state after change: ");
+        electricTrain.displayTrainInfo();
+
+        // Restoring the state of the electric train
+        TrainMemento restoredElectricTrainState = mementoManager.getMemento("E123", 0);
+        if (restoredElectricTrainState != null) {
+            electricTrain = new ElectricTrain.ElectricTrainBuilder()
+                    .withTrainId(restoredElectricTrainState.getTrainId())
+                    .withTrainType(restoredElectricTrainState.getTrainType())
+                    .withDepartureTime(restoredElectricTrainState.getDepartureTime())
+                    .withArrivalTime(restoredElectricTrainState.getArrivalTime())
+                    .withStatus(restoredElectricTrainState.getStatus())
+                    .build();
+            System.out.println("Restored electric train state: ");
+            electricTrain.displayTrainInfo();
+        } else {
+            System.out.println("Saved state for restoration not found");
+        }
     }
 }
