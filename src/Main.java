@@ -192,6 +192,8 @@ class Train implements ClonableTrain, Visitable {
         } else {
             System.out.println("No memento found at index: " + index);
         }
+    }
+
     public void setStatus(String status) {
         this.status = status;
         notifyObservers("Status updated to " + status);
@@ -263,9 +265,6 @@ class Train implements ClonableTrain, Visitable {
     }
 }
 
-}
-
-
 interface TrainOperations {
     void startEngine();
     void stopEngine();
@@ -326,6 +325,8 @@ class DieselTrain extends Train implements TrainOperations, MaintenanceOperation
 
     private DieselTrain(DieselTrainBuilder builder) {
         super(builder);
+    }
+
     public DieselTrain(String trainId, String trainType, String departureTime, String arrivalTime, String status) {
         super(trainId, trainType, departureTime, arrivalTime, status);
     }
@@ -575,6 +576,8 @@ class CargoTrain extends Train implements TrainOperations {
                 .withStatus(getStatus())
                 .withCargoWeight(cargoWeight)
                 .build();
+    }
+
     public CargoTrain(String trainId, String trainType, String departureTime, String arrivalTime, String status, double cargoWeight) {
         super(trainId, trainType, departureTime,arrivalTime,status);
         this.cargoWeight = cargoWeight;
@@ -747,64 +750,6 @@ interface Visitable {
     void accept(TrainVisitor visitor);
 }
 
-public class Main {
-    public static void main(String[] args) {
-        TransportFactory factory = new DefaultTransportFactory();
-
-        Station station = factory.createStation("Central", "Astana");
-        station.displayStationInfo();
-
-        Train electricTrain = new ElectricTrain.ElectricTrainBuilder()
-                .withTrainId("E123")
-                .withTrainType("Electric")
-                .withDepartureTime("10:00")
-                .withArrivalTime("12:00")
-                .withStatus("On Time")
-                .build();
-
-        Train dieselTrain = new DieselTrain.DieselTrainBuilder()
-                .withTrainId("D456")
-                .withTrainType("Diesel")
-                .withDepartureTime("12:00")
-                .withArrivalTime("14:00")
-                .withStatus("Delayed")
-                .build();
-
-        Passenger passenger = factory.createPassenger("John Doe", "T123", "12A");
-
-        ConcreteTrainVisitor visitor = new ConcreteTrainVisitor();
-
-        electricTrain.accept(visitor);
-        passenger.accept(visitor);
-        station.accept(visitor);
-
-        // Context for each train
-        TrainContext electricTrainContext = new TrainContext();
-        TrainContext dieselTrainContext = new TrainContext();
-
-        // Applying initial state (Stopped by default)
-        electricTrainContext.applyState();
-        dieselTrainContext.applyState();
-
-        // Changing the state to “Running”
-        electricTrainContext.setState(new RunningState());
-        electricTrainContext.applyState();
-        electricTrain.displayTrainInfo();
-
-        dieselTrainContext.setState(new RunningState());
-        dieselTrainContext.applyState();
-        dieselTrain.displayTrainInfo();
-
-        // Switching back to stop state
-        electricTrainContext.setState(new StoppedState());
-        electricTrainContext.applyState();
-
-        dieselTrainContext.setState(new StoppedState());
-        dieselTrainContext.applyState();
-
-        // For example, a diesel train needs maintenance
-        dieselTrainContext.setState(new MaintenanceState());
-        dieselTrainContext.applyState();
 
 abstract class TrainWithTemplate {
 
@@ -850,12 +795,69 @@ class DieselTrainWithTemplate extends TrainWithTemplate {
     }
 }
 
-
-
 public class Main {
     public static void main(String[] args) {
-        Train electricTrain = new ElectricTrain("E123", "Electric", "10:00", "12:00", "On Time");
-        Train dieselTrain = new DieselTrain("D456", "Diesel", "12:00", "14:00", "Delayed");
+        TransportFactory factory = new DefaultTransportFactory();
+
+        Station station = factory.createStation("Central", "Astana");
+        station.displayStationInfo();
+        
+        Maintenance maintenance = factory.createMaintenance("2024-01-01", 180);
+        maintenance.displayMaintenanceInfo();
+        maintenance.isServiceDue("2024-06-01");
+
+        Train electricTrain = new ElectricTrain.ElectricTrainBuilder()
+                .withTrainId("E123")
+                .withTrainType("Electric")
+                .withDepartureTime("10:00")
+                .withArrivalTime("12:00")
+                .withStatus("On Time")
+                .build();
+
+        Train dieselTrain = new DieselTrain.DieselTrainBuilder()
+                .withTrainId("D456")
+                .withTrainType("Diesel")
+                .withDepartureTime("12:00")
+                .withArrivalTime("14:00")
+                .withStatus("Delayed")
+                .build();
+
+
+        Passenger passenger = factory.createPassenger("John Doe", "T123", "12A");
+
+        ConcreteTrainVisitor visitor = new ConcreteTrainVisitor();
+
+        electricTrain.accept(visitor);
+        passenger.accept(visitor);
+        station.accept(visitor);
+
+        // Context for each train
+        TrainContext electricTrainContext = new TrainContext();
+        TrainContext dieselTrainContext = new TrainContext();
+
+        // Applying initial state (Stopped by default)
+        electricTrainContext.applyState();
+        dieselTrainContext.applyState();
+
+        // Changing the state to “Running”
+        electricTrainContext.setState(new RunningState());
+        electricTrainContext.applyState();
+        electricTrain.displayTrainInfo();
+
+        dieselTrainContext.setState(new RunningState());
+        dieselTrainContext.applyState();
+        dieselTrain.displayTrainInfo();
+
+        // Switching back to stop state
+        electricTrainContext.setState(new StoppedState());
+        electricTrainContext.applyState();
+
+        dieselTrainContext.setState(new StoppedState());
+        dieselTrainContext.applyState();
+
+        // For example, a diesel train needs maintenance
+        dieselTrainContext.setState(new MaintenanceState());
+        dieselTrainContext.applyState();
 
         // Create controllers for trains
         TrainController electricController = new TrainController((TrainOperations) electricTrain);
@@ -864,6 +866,7 @@ public class Main {
         TrainObserver logger = new TrainStatusLogger();
         electricTrain.addObserver(logger);
         dieselTrain.addObserver(logger);
+
         // Manage train schedule
         TrainSchedule schedule = new TrainSchedule();
         schedule.addTrain(electricTrain);
@@ -879,8 +882,7 @@ public class Main {
 
         dieselController.startJourney();
         dieselTrain.displayTrainInfo();
-        dieselController.endJourney() ;
-
+        dieselController.endJourney();
 
         TrainUpdaterStrategy statusUpdater = new TrainStatusUpdater("Arrived");
         statusUpdater.update(schedule, "D456");
@@ -888,8 +890,6 @@ public class Main {
 
         TrainUpdaterStrategy timeUpdater = new TrainTimeUpdater("09:00", "11:00");
         timeUpdater.update(schedule, "E123");
-
-
 
         CargoTrain cargoTrain = (CargoTrain) new CargoTrain.CargoTrainBuilder()
                 .withTrainId("C789")
@@ -899,23 +899,10 @@ public class Main {
                 .withStatus("On time")
                 .withCargoWeight(50.0)
                 .build();
-        CargoTrain cargoTrain = new CargoTrain("C789", "Cargo", "14:00", "21:00" , "On time" , 50);
+        
         cargoTrain.startEngine();
         cargoTrain.displayCargoInfo();
         cargoTrain.stopEngine();
-
-
-        Passenger passenger = new Passenger("John Doe", "T123", "12A");
-        passenger.displayPassengerInfo();
-
-        Station station = new Station("Central", "Astana");
-        station.displayStationInfo();
-
-
-        Maintenance maintenance = new Maintenance("2024-01-01", 180);
-        maintenance.displayMaintenanceInfo();
-        maintenance.isServiceDue("2024-06-01");
-
 
         Train electricTrainClone = electricTrain.clone();
         Train dieselTrainClone = dieselTrain.clone();
@@ -923,19 +910,14 @@ public class Main {
 
         electricTrainClone.displayTrainInfo();
         dieselTrainClone.displayTrainInfo();
-
         TrainManager manager1 = TrainManager.getInstance();
         TrainManager manager2 = TrainManager.getInstance();
-
 
         System.out.println(manager1 == manager2);
 
 
         manager1.manageTrain(electricTrain);
         manager2.manageTrain(dieselTrain);
-        Maintenance maintenance = factory.createMaintenance("2024-01-01", 180);
-        maintenance.displayMaintenanceInfo();
-        maintenance.isServiceDue("2024-06-01");
 
         // Using Memento to save and restore the state of trains
         MementoManager mementoManager = new MementoManager();
@@ -972,6 +954,7 @@ public class Main {
                     .withArrivalTime(restoredElectricTrainState.getArrivalTime())
                     .withStatus(restoredElectricTrainState.getStatus())
                     .build();
+            
             System.out.println("Restored electric train state: ");
             electricTrain.displayTrainInfo();
         } else {
@@ -980,6 +963,5 @@ public class Main {
 
         TrainWithTemplate electricService = new ElectricTrainWithTemplate();
         electricService.performService();
-
     }
 }
