@@ -1,6 +1,5 @@
 import java.util.ArrayList;
 import java.util.List;
-<<<<<<< HEAD
 import java.util.HashMap;
 import java.util.Map;
 
@@ -48,7 +47,6 @@ class TrainMemento {
     private final String status;
 
     public TrainMemento(String trainId, String trainType, String departureTime, String arrivalTime, String status) {
-=======
 interface ClonableTrain {
     Train clone();
 }
@@ -64,7 +62,6 @@ class Train implements ClonableTrain {
     private List<TrainObserver> observers = new ArrayList<>();
 
     public Train(String trainId, String trainType, String departureTime, String arrivalTime, String status) {
->>>>>>> meiirzhan
         this.trainId = trainId;
         this.trainType = trainType;
         this.departureTime = departureTime;
@@ -72,7 +69,6 @@ class Train implements ClonableTrain {
         this.status = status;
     }
 
-<<<<<<< HEAD
     public String getTrainId() { return trainId; }
     public String getTrainType() { return trainType; }
     public String getDepartureTime() { return departureTime; }
@@ -114,7 +110,6 @@ class Train implements ClonableTrain, Visitable {
         this.status = builder.status;
     }
 
-=======
     // Add an observer
     public void addObserver(TrainObserver observer) {
         observers.add(observer);
@@ -133,12 +128,10 @@ class Train implements ClonableTrain, Visitable {
     }
 
     // Getter and Setter methods with notifications to observers
->>>>>>> meiirzhan
     public String getTrainId() {
         return trainId;
     }
 
-<<<<<<< HEAD
     public String getTrainType() {
         return trainType;
     }
@@ -148,7 +141,6 @@ class Train implements ClonableTrain, Visitable {
     public String getArrivalTime() {
         return arrivalTime;
     }
-=======
     public void setTrainId(String trainId) {
         this.trainId = trainId;
     }
@@ -179,12 +171,10 @@ class Train implements ClonableTrain, Visitable {
         notifyObservers("Arrival time updated to " + arrivalTime);
     }
 
->>>>>>> meiirzhan
     public String getStatus() {
         return status;
     }
 
-<<<<<<< HEAD
     public TrainMemento saveState() {
         TrainMemento memento = new TrainMemento(trainId, trainType, departureTime, arrivalTime, status);
         mementoManager.saveMemento(trainId, memento);
@@ -202,16 +192,13 @@ class Train implements ClonableTrain, Visitable {
         } else {
             System.out.println("No memento found at index: " + index);
         }
-=======
     public void setStatus(String status) {
         this.status = status;
         notifyObservers("Status updated to " + status);
->>>>>>> meiirzhan
     }
 
     @Override
     public Train clone() {
-<<<<<<< HEAD
         return new Train.TrainBuilder()
                 .withTrainId(trainId)
                 .withTrainType(trainType)
@@ -224,16 +211,13 @@ class Train implements ClonableTrain, Visitable {
     @Override
     public void accept(TrainVisitor visitor) {
         visitor.visitTrain(this);
-=======
         return new Train(trainId, trainType, departureTime, arrivalTime, status);
->>>>>>> meiirzhan
     }
 
     public void displayTrainInfo() {
         System.out.println("Train ID: " + trainId + ", Type: " + trainType +
                 ", Departure: " + departureTime + ", Arrival: " + arrivalTime + ", Status: " + status);
     }
-<<<<<<< HEAD
 
     public static class TrainBuilder {
         private String trainId;
@@ -279,11 +263,9 @@ class Train implements ClonableTrain, Visitable {
     }
 }
 
-=======
 }
 
 
->>>>>>> meiirzhan
 interface TrainOperations {
     void startEngine();
     void stopEngine();
@@ -297,7 +279,6 @@ interface MaintenanceOperations {
 
 class ElectricTrain extends Train implements TrainOperations, MaintenanceOperations {
 
-<<<<<<< HEAD
     private ElectricTrain(ElectricTrainBuilder builder) {
         super(builder);
     }
@@ -310,7 +291,6 @@ class ElectricTrain extends Train implements TrainOperations, MaintenanceOperati
                 .withStatus(getStatus())
                 .build();
     }
-=======
     public ElectricTrain(String trainId, String trainType, String departureTime, String arrivalTime, String status) {
         super(trainId, trainType, departureTime, arrivalTime, status);
     }
@@ -318,7 +298,6 @@ class ElectricTrain extends Train implements TrainOperations, MaintenanceOperati
         return new ElectricTrain(getTrainId(),getTrainType(),getDepartureTime(),getArrivalTime(),getStatus());
     }
 
->>>>>>> meiirzhan
     @Override
     public void startEngine() {
         System.out.println("Electric engine started.");
@@ -333,7 +312,6 @@ class ElectricTrain extends Train implements TrainOperations, MaintenanceOperati
     public void performMaintenance() {
         System.out.println("Performing maintenance on electric train.");
     }
-<<<<<<< HEAD
 
     public static class ElectricTrainBuilder extends TrainBuilder {
         @Override
@@ -341,25 +319,19 @@ class ElectricTrain extends Train implements TrainOperations, MaintenanceOperati
             return new ElectricTrain(this);
         }
     }
-=======
->>>>>>> meiirzhan
 }
 
 
 class DieselTrain extends Train implements TrainOperations, MaintenanceOperations {
 
-<<<<<<< HEAD
     private DieselTrain(DieselTrainBuilder builder) {
         super(builder);
-=======
     public DieselTrain(String trainId, String trainType, String departureTime, String arrivalTime, String status) {
         super(trainId, trainType, departureTime, arrivalTime, status);
->>>>>>> meiirzhan
     }
 
     @Override
     public DieselTrain clone() {
-<<<<<<< HEAD
         return (DieselTrain) new DieselTrainBuilder()
                 .withTrainId(getTrainId())
                 .withTrainType(getTrainType())
@@ -367,9 +339,7 @@ class DieselTrain extends Train implements TrainOperations, MaintenanceOperation
                 .withArrivalTime(getArrivalTime())
                 .withStatus(getStatus())
                 .build();
-=======
         return new DieselTrain(getTrainId(),getTrainType(),getDepartureTime(),getArrivalTime(),getStatus());
->>>>>>> meiirzhan
     }
 
     @Override
@@ -386,7 +356,6 @@ class DieselTrain extends Train implements TrainOperations, MaintenanceOperation
     public void performMaintenance() {
         System.out.println("Performing maintenance on diesel train.");
     }
-<<<<<<< HEAD
 
     public static class DieselTrainBuilder extends TrainBuilder {
         @Override
@@ -394,8 +363,6 @@ class DieselTrain extends Train implements TrainOperations, MaintenanceOperation
             return new DieselTrain(this);
         }
     }
-=======
->>>>>>> meiirzhan
 }
 
 
@@ -417,16 +384,13 @@ class TrainController {
     }
 }
 
-<<<<<<< HEAD
 class TrainStatusLogger {
     public void logStatusChange(String trainId, String oldStatus, String newStatus) {
         System.out.println("Train " + trainId + " status changed from " + oldStatus + " to " + newStatus);
-=======
 class TrainStatusLogger implements TrainObserver {
     @Override
     public void update(String trainId, String message) {
         System.out.println("Train " + trainId + " notification: " + message);
->>>>>>> meiirzhan
     }
 }
 
@@ -463,10 +427,7 @@ interface TrainUpdaterStrategy {
 
 class TrainStatusUpdater implements TrainUpdaterStrategy {
     private String newStatus;
-<<<<<<< HEAD
     private TrainStatusLogger logger = new TrainStatusLogger();
-=======
->>>>>>> meiirzhan
 
     public TrainStatusUpdater(String newStatus) {
         this.newStatus = newStatus;
@@ -476,7 +437,6 @@ class TrainStatusUpdater implements TrainUpdaterStrategy {
     public void update(TrainSchedule schedule, String trainId) {
         Train train = schedule.getTrainById(trainId);
         if (train != null) {
-<<<<<<< HEAD
             String oldStatus = train.getStatus();
             Train updatedTrain = new Train.TrainBuilder()
                     .withTrainId(train.getTrainId())
@@ -487,9 +447,7 @@ class TrainStatusUpdater implements TrainUpdaterStrategy {
                     .build();
             schedule.addTrain(updatedTrain);
             logger.logStatusChange(trainId, oldStatus, newStatus);
-=======
             train.setStatus(newStatus); // This will automatically notify observers
->>>>>>> meiirzhan
         } else {
             System.out.println("Train not found.");
         }
@@ -510,7 +468,6 @@ class TrainTimeUpdater implements TrainUpdaterStrategy {
     public void update(TrainSchedule schedule, String trainId) {
         Train train = schedule.getTrainById(trainId);
         if (train != null) {
-<<<<<<< HEAD
             Train updatedTrain = new Train.TrainBuilder()
                     .withTrainId(train.getTrainId())
                     .withTrainType(train.getTrainType())
@@ -520,16 +477,13 @@ class TrainTimeUpdater implements TrainUpdaterStrategy {
                     .build();
             schedule.addTrain(updatedTrain);
             System.out.println("Train " + trainId + " times updated.");
-=======
             train.setDepartureTime(departureTime);
             train.setArrivalTime(arrivalTime);
->>>>>>> meiirzhan
         } else {
             System.out.println("Train not found.");
         }
     }
 }
-<<<<<<< HEAD
 class DefaultPassengerFactory implements PassengerFactory {
     @Override
     public Passenger createPassenger(String name, String ticketNumber, String seatNumber) {
@@ -538,10 +492,8 @@ class DefaultPassengerFactory implements PassengerFactory {
 }
 
 class Passenger implements Visitable {
-=======
 
 class Passenger {
->>>>>>> meiirzhan
     private String name;
     private String ticketNumber;
     private String seatNumber;
@@ -552,7 +504,6 @@ class Passenger {
         this.seatNumber = seatNumber;
     }
 
-<<<<<<< HEAD
     @Override
     public void accept(TrainVisitor visitor) {
         visitor.visitPassenger(this);
@@ -575,7 +526,6 @@ class DefaultStationFactory implements StationFactory {
 }
 
 class Station implements Visitable {
-=======
     public void displayPassengerInfo() {
         System.out.println("Passenger: " + name + ", Ticket: " + ticketNumber + ", Seat: " + seatNumber);
     }
@@ -583,7 +533,6 @@ class Station implements Visitable {
 
 
 class Station {
->>>>>>> meiirzhan
     private String stationName;
     private String location;
 
@@ -592,7 +541,6 @@ class Station {
         this.location = location;
     }
 
-<<<<<<< HEAD
     @Override
     public void accept(TrainVisitor visitor) {
         visitor.visitStation(this);
@@ -605,18 +553,15 @@ class Station {
     public String getStationName() {
         return stationName;
     }
-=======
     public void displayStationInfo() {
         System.out.println("Station: " + stationName + ", Location: " + location);
     }
->>>>>>> meiirzhan
 }
 
 
 class CargoTrain extends Train implements TrainOperations {
     private double cargoWeight;
 
-<<<<<<< HEAD
     private CargoTrain(CargoTrainBuilder builder) {
         super(builder);
         this.cargoWeight = builder.cargoWeight;
@@ -630,14 +575,12 @@ class CargoTrain extends Train implements TrainOperations {
                 .withStatus(getStatus())
                 .withCargoWeight(cargoWeight)
                 .build();
-=======
     public CargoTrain(String trainId, String trainType, String departureTime, String arrivalTime, String status, double cargoWeight) {
         super(trainId, trainType, departureTime,arrivalTime,status);
         this.cargoWeight = cargoWeight;
     }
     public CargoTrain clone() {
         return new CargoTrain(getTrainId(), getTrainType(), getDepartureTime(), getArrivalTime(), getStatus(), cargoWeight);
->>>>>>> meiirzhan
     }
 
     @Override
@@ -653,7 +596,6 @@ class CargoTrain extends Train implements TrainOperations {
     public void displayCargoInfo() {
         System.out.println("Cargo weight: " + cargoWeight + " tons");
     }
-<<<<<<< HEAD
 
     public static class CargoTrainBuilder extends TrainBuilder {
 
@@ -676,10 +618,8 @@ class DefaultMaintenanceFactory implements MaintenanceFactory {
         return new Maintenance(lastServiceDate, serviceIntervalDays);
     }
 }
-=======
 }
 
->>>>>>> meiirzhan
 
 class Maintenance {
     private String lastServiceDate;
@@ -716,7 +656,6 @@ class TrainManager {
     }
 
 }
-<<<<<<< HEAD
 
 interface TrainState {
     void handle(TrainContext context);
@@ -867,7 +806,6 @@ public class Main {
         dieselTrainContext.setState(new MaintenanceState());
         dieselTrainContext.applyState();
 
-=======
 abstract class TrainWithTemplate {
 
     public final void performService() {
@@ -918,29 +856,22 @@ public class Main {
     public static void main(String[] args) {
         Train electricTrain = new ElectricTrain("E123", "Electric", "10:00", "12:00", "On Time");
         Train dieselTrain = new DieselTrain("D456", "Diesel", "12:00", "14:00", "Delayed");
->>>>>>> meiirzhan
 
         // Create controllers for trains
         TrainController electricController = new TrainController((TrainOperations) electricTrain);
         TrainController dieselController = new TrainController((TrainOperations) dieselTrain);
 
-<<<<<<< HEAD
-=======
         TrainObserver logger = new TrainStatusLogger();
         electricTrain.addObserver(logger);
         dieselTrain.addObserver(logger);
->>>>>>> meiirzhan
         // Manage train schedule
         TrainSchedule schedule = new TrainSchedule();
         schedule.addTrain(electricTrain);
         schedule.addTrain(dieselTrain);
         schedule.displayAllTrains();
 
-<<<<<<< HEAD
         passenger.displayPassengerInfo();
 
-=======
->>>>>>> meiirzhan
         // Start and end journeys
         electricController.startJourney();
         electricTrain.displayTrainInfo();
@@ -960,7 +891,6 @@ public class Main {
 
 
 
-<<<<<<< HEAD
         CargoTrain cargoTrain = (CargoTrain) new CargoTrain.CargoTrainBuilder()
                 .withTrainId("C789")
                 .withTrainType("Cargo")
@@ -969,16 +899,12 @@ public class Main {
                 .withStatus("On time")
                 .withCargoWeight(50.0)
                 .build();
-=======
         CargoTrain cargoTrain = new CargoTrain("C789", "Cargo", "14:00", "21:00" , "On time" , 50);
->>>>>>> meiirzhan
         cargoTrain.startEngine();
         cargoTrain.displayCargoInfo();
         cargoTrain.stopEngine();
 
 
-<<<<<<< HEAD
-=======
         Passenger passenger = new Passenger("John Doe", "T123", "12A");
         passenger.displayPassengerInfo();
 
@@ -991,7 +917,6 @@ public class Main {
         maintenance.isServiceDue("2024-06-01");
 
 
->>>>>>> meiirzhan
         Train electricTrainClone = electricTrain.clone();
         Train dieselTrainClone = dieselTrain.clone();
 
@@ -1008,7 +933,6 @@ public class Main {
 
         manager1.manageTrain(electricTrain);
         manager2.manageTrain(dieselTrain);
-<<<<<<< HEAD
         Maintenance maintenance = factory.createMaintenance("2024-01-01", 180);
         maintenance.displayMaintenanceInfo();
         maintenance.isServiceDue("2024-06-01");
@@ -1053,11 +977,9 @@ public class Main {
         } else {
             System.out.println("Saved state for restoration not found");
         }
-=======
 
         TrainWithTemplate electricService = new ElectricTrainWithTemplate();
         electricService.performService();
 
->>>>>>> meiirzhan
     }
 }
