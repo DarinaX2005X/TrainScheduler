@@ -135,9 +135,6 @@ class TrainMemento {
     public String getStatus() { return status; }
 }
 
-interface ClonableTrain {
-    Train clone();
-}
 interface TrainObserver {
     void update(String trainId, String message);
 }
@@ -1068,10 +1065,6 @@ public class Main {
 
         manager1.manageTrain(electricTrain);
         manager2.manageTrain(dieselTrain);
-
-        Maintenance maintenance = factory.createMaintenance("2024-01-01", 180);
-        maintenance.displayMaintenanceInfo();
-        maintenance.isServiceDue("2024-06-01");
 
         // Using Memento to save and restore the state of trains
         MementoManager mementoManager = new MementoManager();
