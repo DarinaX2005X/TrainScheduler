@@ -2,6 +2,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Scanner;
 
 interface ClonableTrain {
     Train clone();
@@ -163,6 +164,7 @@ class Train implements Visitable {
     private String departureTime;
     private String arrivalTime;
     private String status;
+    private TrainContext trainContext;
     private MementoManager mementoManager = new MementoManager();
     private List<TrainObserver> observers = new ArrayList<>();
 
@@ -174,13 +176,14 @@ class Train implements Visitable {
         this.status = builder.status;
     }
 
-    public Train(String trainId, String trainType, String departureTime, String arrivalTime, String status) {
-    this.trainId = trainId;
-    this.trainType = trainType;
-    this.departureTime = departureTime;
-    this.arrivalTime = arrivalTime;
-    this.status = status;
-}
+    public String getTrainId() {
+        return trainId;
+    }
+
+    public String getTrainType() {
+        return trainType;
+    }
+
 
     // Add an observer
     public void addObserver(TrainObserver observer) {
@@ -200,13 +203,7 @@ class Train implements Visitable {
     }
 
     // Getter and Setter methods with notifications to observers
-    public String getTrainId() {
-        return trainId;
-    }
 
-    public String getTrainType() {
-        return trainType;
-    }
     public String getDepartureTime() {
         return departureTime;
     }
@@ -215,10 +212,6 @@ class Train implements Visitable {
     }
     public void setTrainId(String trainId) {
         this.trainId = trainId;
-    }
-
-    public void setTrainType(String trainType) {
-        this.trainType = trainType;
     }
 
     public void setDepartureTime(String departureTime) {
@@ -541,25 +534,6 @@ class DieselTrain extends Train implements TrainOperations, MaintenanceOperation
     }
 }
 
-
-class TrainController {
-    private final TrainOperations train;
-
-    public TrainController(TrainOperations train) {
-        this.train = train;
-    }
-
-    public void startJourney() {
-        train.startEngine();
-        System.out.println("Journey started.");
-    }
-
-    public void endJourney() {
-        train.stopEngine();
-        System.out.println("Journey ended.");
-    }
-}
-
 class TrainStatusLogger implements TrainObserver {
     @Override
     public void update(String trainId, String message) {
@@ -573,14 +547,19 @@ class TrainStatusLogger implements TrainObserver {
 
 
 class TrainSchedule {
-    private List<Train> trainList = new ArrayList<>();
-
+    private List<Train> trainList ;
+    private List<Station> stations ;
+    public TrainSchedule() {
+        trainList = new ArrayList<>();
+        stations = new ArrayList<>();
+    }
     public void addTrain(Train train) {
         trainList.add(train);
     }
 
-
-
+    public void addStation(Station station) {
+        stations.add(station);
+    }
     public Train getTrainById(String trainId) {
         for (Train train : trainList) {
             if (train.getTrainId().equals(trainId)) {
@@ -591,6 +570,13 @@ class TrainSchedule {
     }
     public TrainIterator iterator() {
         return new TrainScheduleIterator(trainList);
+    }
+
+
+    public void displayAllStations() {
+        for (Station station : stations) {
+            station.displayStationInfo();
+        }
     }
 }
 
@@ -907,212 +893,6 @@ interface Visitable {
     void accept(TrainVisitor visitor);
 }
 
-public class Main {
-    public static void main(String[] args) {
-        TransportFactory factory = new DefaultTransportFactory();
-
-        Station station = factory.createStation("Central", "Astana");
-        station.displayStationInfo();
-        
-        Maintenance maintenance = factory.createMaintenance("2024-01-01", 180);
-        maintenance.displayMaintenanceInfo();
-        maintenance.isServiceDue("2024-06-01");
-
-        Train electricTrain = new ElectricTrain.ElectricTrainBuilder()
-                .withTrainId("E123")
-                .withTrainType("Electric")
-                .withDepartureTime("10:00")
-                .withArrivalTime("12:00")
-                .withStatus("On Time")
-                .build();
-
-        Train dieselTrain = new DieselTrain.DieselTrainBuilder()
-                .withTrainId("D456")
-                .withTrainType("Diesel")
-                .withDepartureTime("12:00")
-                .withArrivalTime("14:00")
-                .withStatus("Delayed")
-                .build();
-
-
-        Passenger passenger = factory.createPassenger("John Doe", "T123", "12A");
-
-        ConcreteTrainVisitor visitor = new ConcreteTrainVisitor();
-
-        electricTrain.accept(visitor);
-        passenger.accept(visitor);
-        station.accept(visitor);
-
-        // Context for each train
-        TrainContext electricTrainContext = new TrainContext();
-        TrainContext dieselTrainContext = new TrainContext();
-
-        // Applying initial state (Stopped by default)
-        electricTrainContext.applyState();
-        dieselTrainContext.applyState();
-
-        // Changing the state to “Running”
-        electricTrainContext.setState(new RunningState());
-        electricTrainContext.applyState();
-        electricTrain.displayTrainInfo();
-
-        dieselTrainContext.setState(new RunningState());
-        dieselTrainContext.applyState();
-        dieselTrain.displayTrainInfo();
-
-        // Switching back to stop state
-        electricTrainContext.setState(new StoppedState());
-        electricTrainContext.applyState();
-
-        dieselTrainContext.setState(new StoppedState());
-        dieselTrainContext.applyState();
-
-        // For example, a diesel train needs maintenance
-        dieselTrainContext.setState(new MaintenanceState());
-        dieselTrainContext.applyState();
-
-        // Create controllers for trains
-        TrainController electricController = new TrainController((TrainOperations) electricTrain);
-        TrainController dieselController = new TrainController((TrainOperations) dieselTrain);
-
-        TrainObserver logger = new TrainStatusLogger();
-        electricTrain.addObserver(logger);
-        dieselTrain.addObserver(logger);
-
-        // Manage train schedule
-        TrainSchedule schedule = new TrainSchedule();
-        schedule.addTrain(electricTrain);
-        schedule.addTrain(dieselTrain);
-        TrainIterator iterator = schedule.iterator();
-        System.out.println("Train Schedule (using Iterator):");
-        while (iterator.hasNext()) {
-            Train train = iterator.next();
-            train.displayTrainInfo();
-        }
-
-
-        Ticket ticket1 = new Ticket("T123", "John Doe", "12A");
-
-
-        TicketManager ticketManager = new TicketManager();
-
-
-        Command bookCommand = new BookTicketCommand(ticket1);
-        ticketManager.setCommand(bookCommand);
-        ticketManager.executeCommand();
-        ticket1.displayTicketInfo();
-
-
-        Command modifyCommand = new ModifyTicketCommand(ticket1, "14B");
-        ticketManager.setCommand(modifyCommand);
-        ticketManager.executeCommand();
-        ticket1.displayTicketInfo();
-
-
-        Command cancelCommand = new CancelTicketCommand(ticket1);
-        ticketManager.setCommand(cancelCommand);
-        ticketManager.executeCommand();
-        ticket1.displayTicketInfo();
-
-        TrainOperationTemplate electricOperation = new ElectricTrainOperation((ElectricTrain) electricTrain);
-        electricOperation.manageOperation();
-
-        TrainOperationTemplate dieselOperation = new DieselTrainOperation((DieselTrain) dieselTrain);
-        dieselOperation.manageOperation();
-
-        passenger.displayPassengerInfo();
-
-        // Start and end journeys
-        electricController.startJourney();
-        electricTrain.displayTrainInfo();
-        electricController.endJourney();
-
-        dieselController.startJourney();
-        dieselTrain.displayTrainInfo();
-        dieselController.endJourney();
-
-        TrainUpdaterStrategy statusUpdater = new TrainStatusUpdater("Arrived");
-        statusUpdater.update(schedule, "D456");
-
-
-        TrainUpdaterStrategy timeUpdater = new TrainTimeUpdater("09:00", "11:00");
-        timeUpdater.update(schedule, "E123");
-
-        CargoTrain cargoTrain = (CargoTrain) new CargoTrain.CargoTrainBuilder()
-                .withTrainId("C789")
-                .withTrainType("Cargo")
-                .withDepartureTime("14:00")
-                .withArrivalTime("20:00")
-                .withStatus("On time")
-                .withCargoWeight(50.0)
-                .build();
-        
-        cargoTrain.startEngine();
-        cargoTrain.displayCargoInfo();
-        cargoTrain.stopEngine();
-
-        Train electricTrainClone = electricTrain.clone();
-        Train dieselTrainClone = dieselTrain.clone();
-
-
-        electricTrainClone.displayTrainInfo();
-        dieselTrainClone.displayTrainInfo();
-        TrainManager manager1 = TrainManager.getInstance();
-        TrainManager manager2 = TrainManager.getInstance();
-
-        System.out.println(manager1 == manager2);
-
-
-        manager1.manageTrain(electricTrain);
-        manager2.manageTrain(dieselTrain);
-
-        // Using Memento to save and restore the state of trains
-        MementoManager mementoManager = new MementoManager();
-
-        // Saving the state of the electric train
-        TrainMemento savedElectricTrainState = new TrainMemento(
-                electricTrain.getTrainId(),
-                electricTrain.getTrainType(),
-                electricTrain.getDepartureTime(),
-                electricTrain.getArrivalTime(),
-                electricTrain.getStatus()
-        );
-        mementoManager.saveMemento(electricTrain.getTrainId(), savedElectricTrainState);
-
-        // Changing the state of the electric train
-        electricTrain = new ElectricTrain.ElectricTrainBuilder()
-                .withTrainId("E123")
-                .withTrainType("Electric")
-                .withDepartureTime("10:00")
-                .withArrivalTime("12:00")
-                .withStatus("Delayed")
-                .build();
-
-        System.out.println("Electric train state after change: ");
-        electricTrain.displayTrainInfo();
-
-        // Restoring the state of the electric train
-        TrainMemento restoredElectricTrainState = mementoManager.getMemento("E123", 0);
-        if (restoredElectricTrainState != null) {
-            electricTrain = new ElectricTrain.ElectricTrainBuilder()
-                    .withTrainId(restoredElectricTrainState.getTrainId())
-                    .withTrainType(restoredElectricTrainState.getTrainType())
-                    .withDepartureTime(restoredElectricTrainState.getDepartureTime())
-                    .withArrivalTime(restoredElectricTrainState.getArrivalTime())
-                    .withStatus(restoredElectricTrainState.getStatus())
-                    .build();
-            
-            System.out.println("Restored electric train state: ");
-            electricTrain.displayTrainInfo();
-        } else {
-            System.out.println("Saved state for restoration not found");
-        }
-
-        TrainWithTemplate electricService = new ElectricTrainWithTemplate();
-        electricService.performService();
-    }
-}
-
 abstract class TrainWithTemplate {
 
     public final void performService() {
@@ -1155,4 +935,323 @@ class DieselTrainWithTemplate extends TrainWithTemplate {
     protected void refuelOrRecharge() {
         System.out.println("Refueling diesel tank...");
     }
+}
+
+class TrainSystem {
+    public static void main(String[] args) {
+        TrainSchedule schedule = new TrainSchedule();
+        TicketManager ticketManager = new TicketManager();
+        TrainManager trainManager = TrainManager.getInstance();
+        ConcreteTrainVisitor visitor = new ConcreteTrainVisitor();
+
+        TransportFactory transportFactory = new DefaultTransportFactory();
+
+        MementoManager mementoManager = new MementoManager();
+
+        TrainStatusLogger observer1 = new TrainStatusLogger();
+
+        Scanner scanner = new Scanner(System.in);
+
+        while (true) {
+            System.out.println("\n--- Train Management System ---");
+            System.out.println("1. Add Train");
+            System.out.println("2. Display All Trains");
+            System.out.println("3. Book Ticket");
+            System.out.println("4. Cancel Ticket");
+            System.out.println("5. Modify Ticket");
+            System.out.println("6. Add Station");
+            System.out.println("7. Display All Stations");
+            System.out.println("8. Update Train Status");
+            System.out.println("9. Train Operations start");
+            System.out.println("10. Display info by id");
+            System.out.println("11. Inspect");
+            System.out.println("12. Change Train State");
+            System.out.println("13. Clone Train");
+            System.out.println("14. Restore Train state");
+            System.out.println("13. Exit");
+            System.out.print("Select an option: ");
+
+            int choice = scanner.nextInt();
+            scanner.nextLine();
+
+            switch (choice) {
+                case 1 -> addTrain(schedule, scanner,transportFactory);
+                case 2 -> displayAllTrains(schedule);
+                case 3 -> bookTicket(ticketManager, scanner);
+                case 4 -> cancelTicket(ticketManager, scanner);
+                case 5 -> modifyTicket(ticketManager, scanner);
+                case 6 -> addStation(schedule, scanner,transportFactory);
+                case 7 -> displayAllStations(schedule);
+                case 8 -> updateTrainStatus(schedule, scanner);
+                case 9 -> startTrainOperations(schedule,scanner);
+                case 10 -> manageTrain(trainManager,schedule,scanner);
+                case 11 -> inspectObjects(visitor, schedule, scanner);
+                case 12 ->  changeTrainState(schedule, scanner);
+                case 13 -> cloneTrain(schedule, scanner);
+                case 14 -> restoreTrainState(schedule,scanner,mementoManager);
+                case 15 -> {
+                    System.out.println("Exiting system...");
+                    return;
+                }
+                default -> System.out.println("Invalid option. Please try again.");
+            }
+        }
+    }
+
+    private static void addTrain(TrainSchedule schedule, Scanner scanner,TransportFactory transportFactory) {
+        System.out.print("Enter Train ID: ");
+        String trainId = scanner.nextLine();
+        System.out.print("Enter Train Type: ");
+        String trainType = scanner.nextLine();
+        System.out.print("Enter Departure Time: ");
+        String departureTime = scanner.nextLine();
+        System.out.print("Enter Arrival Time: ");
+        String arrivalTime = scanner.nextLine();
+        System.out.print("Enter Status: ");
+        String status = scanner.nextLine();
+
+        Train train = new Train.TrainBuilder()
+                .withTrainId(trainId)
+                .withTrainType(trainType)
+                .withDepartureTime(departureTime)
+                .withArrivalTime(arrivalTime)
+                .withStatus(status)
+                .build();
+
+        train.addObserver(new TrainStatusLogger());
+        schedule.addTrain(train);
+        System.out.println("Train added successfully!");
+    }
+
+    private static void displayAllTrains(TrainSchedule schedule) {
+        TrainIterator iterator = schedule.iterator();
+        while (iterator.hasNext()) {
+            iterator.next().displayTrainInfo();
+        }
+    }
+
+    private static void bookTicket(TicketManager ticketManager, Scanner scanner) {
+        System.out.print("Enter Ticket ID: ");
+        String ticketId = scanner.nextLine();
+        System.out.print("Enter Passenger Name: ");
+        String passengerName = scanner.nextLine();
+        System.out.print("Enter Seat Number: ");
+        String seatNumber = scanner.nextLine();
+
+        Ticket ticket = new Ticket(ticketId, passengerName, seatNumber);
+        ticketManager.setCommand(new BookTicketCommand(ticket));
+        ticketManager.executeCommand();
+    }
+
+    private static void cancelTicket(TicketManager ticketManager, Scanner scanner) {
+        System.out.print("Enter Ticket ID: ");
+        String ticketId = scanner.nextLine();
+        System.out.print("Enter Passenger Name: ");
+        String passengerName = scanner.nextLine();
+        System.out.print("Enter Seat Number: ");
+        String seatNumber = scanner.nextLine();
+
+        Ticket ticket = new Ticket(ticketId, passengerName, seatNumber);
+        ticketManager.setCommand(new CancelTicketCommand(ticket));
+        ticketManager.executeCommand();
+    }
+
+    private static void modifyTicket(TicketManager ticketManager, Scanner scanner) {
+        System.out.print("Enter Ticket ID: ");
+        String ticketId = scanner.nextLine();
+        System.out.print("Enter Passenger Name: ");
+        String passengerName = scanner.nextLine();
+        System.out.print("Enter Current Seat Number: ");
+        String currentSeat = scanner.nextLine();
+        System.out.print("Enter New Seat Number: ");
+        String newSeat = scanner.nextLine();
+
+        Ticket ticket = new Ticket(ticketId, passengerName, currentSeat);
+        ticketManager.setCommand(new ModifyTicketCommand(ticket, newSeat));
+        ticketManager.executeCommand();
+    }
+
+    private static void updateTrainStatus(TrainSchedule schedule, Scanner scanner) {
+        System.out.print("Enter Train ID: ");
+        String trainId = scanner.nextLine();
+        System.out.print("Enter New Status: ");
+        String newStatus = scanner.nextLine();
+
+        TrainUpdaterStrategy updater = new TrainStatusUpdater(newStatus);
+        updater.update(schedule, trainId);
+    }
+
+    private static void startTrainOperations(TrainSchedule schedule, Scanner scanner) {
+        System.out.print("Enter Train ID to start operations: ");
+        String trainId = scanner.nextLine();
+        Train train = schedule.getTrainById(trainId);
+
+        if (train == null) {
+            System.out.println("Train not found.");
+            return;
+        }
+
+        TrainOperationTemplate operation;
+
+        if ("Electric".equalsIgnoreCase(train.getTrainType())) {
+            operation = new ElectricTrainOperation((ElectricTrain) train);
+        } else if ("Diesel".equalsIgnoreCase(train.getTrainType())) {
+            operation = new DieselTrainOperation((DieselTrain) train);
+        } else {
+            System.out.println("Invalid train type for operations.");
+            return;
+        }
+
+
+        operation.manageOperation();
+    }
+
+    private static void manageTrain(TrainManager trainManager, TrainSchedule schedule, Scanner scanner) {
+        System.out.print("Enter Train ID to manage: ");
+        String trainId = scanner.nextLine();
+        Train train = schedule.getTrainById(trainId);
+
+        if (train == null) {
+            System.out.println("Train not found.");
+            return;
+        }
+
+
+        trainManager.manageTrain(train);
+    }
+    private static void inspectObjects(ConcreteTrainVisitor visitor, TrainSchedule schedule, Scanner scanner) {
+        System.out.println("\n--- Inspection Menu ---");
+        System.out.println("1. Inspect a Train");
+        System.out.println("2. Inspect a Passenger");
+        System.out.println("3. Inspect a Station");
+        System.out.print("Choose an option: ");
+
+        int option = scanner.nextInt();
+        scanner.nextLine();
+
+        switch (option) {
+            case 1 -> {
+                System.out.print("Enter Train ID to inspect: ");
+                String trainId = scanner.nextLine();
+                Train train = schedule.getTrainById(trainId);
+                if (train != null) {
+                    train.accept(visitor);
+                } else {
+                    System.out.println("Train not found.");
+                }
+            }
+            case 2 -> {
+                System.out.print("Enter Passenger Name to inspect: ");
+                String passengerName = scanner.nextLine();
+                Passenger passenger = findPassenger(passengerName, "A1", "11");
+                if (passenger != null) {
+                    passenger.accept(visitor);
+                } else {
+                    System.out.println("Passenger not found.");
+                }
+            }
+
+            case 3 -> {
+                System.out.print("Enter Station Name to inspect: ");
+                String stationName = scanner.nextLine();
+                Station station = findStation(stationName,"USA");
+                if (station != null) {
+                    station.accept(visitor);
+                } else {
+                    System.out.println("Station not found.");
+                }
+            }
+            default -> System.out.println("Invalid option.");
+        }
+    }
+
+    private static Passenger findPassenger(String name, String ticketNumber, String seatNumber) {
+        return new Passenger(name, ticketNumber, seatNumber);
+    }
+
+    private static Station findStation(String stationName, String location) {
+        return new Station(stationName, location);
+    }
+    private static void addStation(TrainSchedule schedule, Scanner scanner,TransportFactory transportFactory) {
+        System.out.print("Enter Station Name: ");
+        String stationName = scanner.nextLine();
+        System.out.print("Enter Station Location: ");
+        String location = scanner.nextLine();
+
+        Station station = transportFactory.createStation(stationName, location);
+        schedule.addStation(station);
+        System.out.println("Station added successfully!");
+    }
+
+    private static void displayAllStations(TrainSchedule schedule) {
+        System.out.println("--- All Stations ---");
+        schedule.displayAllStations();
+    }
+    private static void cloneTrain(TrainSchedule schedule, Scanner scanner) {
+        System.out.print("Enter Train ID to clone: ");
+        String trainId = scanner.nextLine();
+        Train originalTrain = schedule.getTrainById(trainId);
+
+        originalTrain.saveState();
+
+        if (originalTrain == null) {
+            System.out.println("Train not found.");
+            return;
+        }
+
+
+        Train clonedTrain = originalTrain.clone();
+        clonedTrain.setTrainId(trainId + "_CLONE");
+
+        schedule.addTrain(clonedTrain);
+        System.out.println("Train cloned successfully!");
+    }
+    private static void changeTrainState(TrainSchedule schedule, Scanner scanner) {
+        System.out.print("Enter Train ID to change state: ");
+        String trainId = scanner.nextLine();
+        Train train = schedule.getTrainById(trainId);
+
+        if (train == null) {
+            System.out.println("Train not found.");
+            return;
+        }
+
+        System.out.println("\nSelect New State for Train: ");
+        System.out.println("1. Running");
+        System.out.println("2. Stopped");
+        System.out.println("3. Under Maintenance");
+        System.out.print("Enter your choice: ");
+        int stateChoice = scanner.nextInt();
+        scanner.nextLine(); // Consume newline
+
+        train.saveState();
+
+        switch (stateChoice) {
+            case 1 -> train.setTrainState(new RunningState());
+            case 2 -> train.setTrainState(new StoppedState());
+            case 3 -> train.setTrainState(new MaintenanceState());
+            default -> System.out.println("Invalid option.");
+        }
+
+        train.applyState();
+    }
+    private static void restoreTrainState(TrainSchedule schedule, Scanner scanner, MementoManager mementoManager) {
+        System.out.print("Enter Train ID to restore state: ");
+        String trainId = scanner.nextLine();
+        Train train = schedule.getTrainById(trainId);
+
+        if (train == null) {
+            System.out.println("Train not found.");
+            return;
+        }
+
+
+        System.out.print("Enter memento index to restore (0 for the most recent): ");
+        int index = scanner.nextInt();
+        scanner.nextLine();
+
+
+        train.restoreState(index);
+    }
+
 }
