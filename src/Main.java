@@ -174,6 +174,24 @@ class Train implements Visitable {
         this.departureTime = builder.departureTime;
         this.arrivalTime = builder.arrivalTime;
         this.status = builder.status;
+        this.trainContext = new TrainContext();
+    }
+
+    public Train(String trainId, String trainType, String departureTime, String arrivalTime, String status) {
+        this.trainId = trainId;
+        this.trainType = trainType;
+        this.departureTime = departureTime;
+        this.arrivalTime = arrivalTime;
+        this.status = status;
+        this.trainContext = new TrainContext();
+    }
+
+    public void setTrainState(TrainState state) {
+        this.trainContext.setState(state);
+    }
+
+    public void applyState() {
+        this.trainContext.applyState();
     }
 
     public String getTrainId() {
